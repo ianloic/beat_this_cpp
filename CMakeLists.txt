@@ -22,40 +22,9 @@ endif()
 
 
 # --- ONNX Runtime --- #
-# Option to use system ONNX Runtime or fetch automatically
-option(USE_SYSTEM_ONNXRUNTIME "Use system-installed ONNX Runtime" OFF)
-
-if(USE_SYSTEM_ONNXRUNTIME)
-    find_package(onnxruntime REQUIRED)
-else()
-    # Fetch ONNX Runtime automatically
-    include(cmake/FetchONNXRuntime.cmake)
-    
-    # Set up ONNX Runtime paths
-    if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-        if(CMAKE_SYSTEM_NAME MATCHES "iOS")
-            set(ONNXRUNTIME_LIB ${ONNXRUNTIME_LIBRARIES}/libonnxruntime.a)
-        else()
-            set(ONNXRUNTIME_LIB ${ONNXRUNTIME_LIBRARIES}/libonnxruntime.1.18.0.dylib)
-        endif()
-    elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-        set(ONNXRUNTIME_LIB ${ONNXRUNTIME_LIBRARIES}/onnxruntime.lib)
-        set(ONNXRUNTIME_DLL ${ONNXRUNTIME_LIBRARIES}/onnxruntime.dll)
-    else()
-        set(ONNXRUNTIME_LIB ${ONNXRUNTIME_LIBRARIES}/libonnxruntime.so.1.18.0)
-    endif()
-    
-    add_library(onnxruntime SHARED IMPORTED)
-    if(WIN32)
-        set_target_properties(onnxruntime PROPERTIES
-            IMPORTED_LOCATION ${ONNXRUNTIME_DLL}
-            IMPORTED_IMPLIB ${ONNXRUNTIME_LIB}
-            INTERFACE_INCLUDE_DIRECTORIES ${ONNXRUNTIME_INCLUDE_DIRS})
-    else()
-        set_target_properties(onnxruntime PROPERTIES
-            IMPORTED_LOCATION ${ONNXRUNTIME_LIB}
-            INTERFACE_INCLUDE_DIRECTORIES ${ONNXRUNTIME_INCLUDE_DIRS})
-    endif()
+# ONNX Runtime is now provided by the parent project via cmake/FetchONNXRuntime.cmake
+if(NOT TARGET onnxruntime)
+    message(FATAL_ERROR "onnxruntime target not found. Please ensure it is defined in the parent project.")
 endif()
 
 # --- Find Dependencies --- #
