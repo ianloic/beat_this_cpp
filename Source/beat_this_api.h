@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
@@ -30,10 +31,12 @@ public:
     BeatThis& operator=(const BeatThis&) = delete;
 
     // Process audio and get beat/downbeat times as vector data
-    BeatResult process_audio(const std::vector<float>& audio_data, int samplerate, int channels = 1);
+    BeatResult process_audio(const std::vector<float>& audio_data, int samplerate, int channels = 1,
+                             std::function<bool()> shouldCancel = nullptr);
 
     // Overload for raw pointer interface
-    BeatResult process_audio(const float* audio_data, size_t num_samples, int samplerate, int channels = 1);
+    BeatResult process_audio(const float* audio_data, size_t num_samples, int samplerate, int channels = 1,
+                             std::function<bool()> shouldCancel = nullptr);
 
 private:
     class Impl;

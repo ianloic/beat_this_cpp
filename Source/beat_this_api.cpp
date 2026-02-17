@@ -202,10 +202,15 @@ std::vector<float> convert_to_mono(const std::vector<float>& audio_data, int cha
 }
 }  // namespace
 
-BeatResult BeatThis::process_audio(const std::vector<float>& audio_data, int samplerate, int channels) {
+BeatResult BeatThis::process_audio(const std::vector<float>& audio_data, int samplerate, int channels,
+                                   std::function<bool()> shouldCancel) {
     try {
+        if (shouldCancel && shouldCancel()) return {{}, {}, {}};
+
         // Convert to mono
         auto mono_audio = convert_to_mono(audio_data, channels);
+
+        if (shouldCancel && shouldCancel()) return {{}, {}, {}};
 
         // Resample if necessary
         std::vector<float> resampled_buffer;
@@ -219,13 +224,19 @@ BeatResult BeatThis::process_audio(const std::vector<float>& audio_data, int sam
             resampled_buffer = std::move(mono_audio);
         }
 
+        if (shouldCancel && shouldCancel()) return {{}, {}, {}};
+
         // Compute Mel Spectrogram
         MelSpectrogram spect_computer;
         auto spectrogram = spect_computer.compute(resampled_buffer);
 
+        if (shouldCancel && shouldCancel()) return {{}, {}, {}};
+
         // Run Inference
         InferenceProcessor processor(*(pImpl->session), pImpl->env);
-        auto beat_downbeat_logits = processor.process_spectrogram(spectrogram);
+        auto beat_downbeat_logits = processor.process_spectrogram(spectrogram, shouldCancel);
+
+        if (beat_downbeat_logits.first.empty()) return {{}, {}, {}};  // Check if cancelled inside processor
 
         // Post-process to get beat and downbeat times
         Postprocessor postprocessor;
@@ -247,9 +258,10 @@ BeatResult BeatThis::process_audio(const std::vector<float>& audio_data, int sam
     }
 }
 
-BeatResult BeatThis::process_audio(const float* audio_data, size_t num_samples, int samplerate, int channels) {
+BeatResult BeatThis::process_audio(const float* audio_data, size_t num_samples, int samplerate, int channels,
+                                   std::function<bool()> shouldCancel) {
     std::vector<float> audio_vector(audio_data, audio_data + num_samples);
-    return process_audio(audio_vector, samplerate, channels);
+    return process_audio(audio_vector, samplerate, channels, shouldCancel);
 }
 
 }  // namespace BeatThis
