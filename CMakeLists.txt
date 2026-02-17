@@ -19,6 +19,11 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
 endif()
 
+if(APPLE)
+    # OBJCXX is enabled at the root level
+    set_source_files_properties(Source/beat_this_api.cpp PROPERTIES LANGUAGE OBJCXX)
+endif()
+
 
 
 # --- ONNX Runtime --- #
@@ -36,7 +41,13 @@ else()
     find_package(PkgConfig REQUIRED)
 endif()
 
-add_library(beat_this_api SHARED 
+if(CMAKE_SYSTEM_NAME MATCHES "iOS")
+    set(BEAT_THIS_LIB_TYPE STATIC)
+else()
+    set(BEAT_THIS_LIB_TYPE SHARED)
+endif()
+
+add_library(beat_this_api ${BEAT_THIS_LIB_TYPE}
     Source/beat_this_api.cpp 
     Source/MelSpectrogram.cpp 
     Source/InferenceProcessor.cpp 
@@ -62,7 +73,21 @@ target_include_directories(beat_this_api PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Source # For header files
 )
 
-target_link_libraries(beat_this_api onnxruntime)
+target_link_libraries(beat_this_api PRIVATE onnxruntime)
+
+if(APPLE)
+    find_library(AVFOUNDATION_LIB AVFoundation)
+    find_library(COREAUDIO_LIB CoreAudio)
+    find_library(AUDIOTOOLBOX_LIB AudioToolbox)
+    find_library(COREFOUNDATION_LIB CoreFoundation)
+    
+    target_link_libraries(beat_this_api PRIVATE
+        ${AVFOUNDATION_LIB} 
+        ${COREAUDIO_LIB} 
+        ${AUDIOTOOLBOX_LIB} 
+        ${COREFOUNDATION_LIB}
+    )
+endif()
 
 if(WIN32)
     add_custom_command(
