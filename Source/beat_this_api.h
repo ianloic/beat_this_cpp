@@ -1,5 +1,7 @@
 #pragma once
 
+#include <onnxruntime_cxx_api.h>
+
 #include <functional>
 #include <memory>
 #include <string>
@@ -17,9 +19,9 @@ struct BeatResult {
 
 class BeatThis {
 public:
-    explicit BeatThis(const std::string& onnx_model_path);
-    explicit BeatThis(const std::vector<uint8_t>& model_data);
-    BeatThis(const void* model_data, size_t model_size);
+    explicit BeatThis(const std::string& onnx_model_path, Ort::Env& env);
+    explicit BeatThis(const std::vector<uint8_t>& model_data, Ort::Env& env);
+    BeatThis(const void* model_data, size_t model_size, Ort::Env& env);
     ~BeatThis();
 
     // Move semantics

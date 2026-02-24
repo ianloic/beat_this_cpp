@@ -20,10 +20,10 @@ namespace BeatThis {
 // Pimpl implementation
 class BeatThis::Impl {
 public:
-    Ort::Env env;
+    Ort::Env& env;
     std::unique_ptr<Ort::Session> session;
 
-    explicit Impl(const std::string& onnx_model_path) : env(ORT_LOGGING_LEVEL_WARNING, "beat_this_cpp_api") {
+    explicit Impl(const std::string& onnx_model_path, Ort::Env& ext_env) : env(ext_env) {
         // Check if file exists
         std::ifstream file_check(onnx_model_path);
         if (!file_check.good()) {
@@ -57,7 +57,7 @@ public:
         }
     }
 
-    Impl(const void* model_data, size_t model_size) : env(ORT_LOGGING_LEVEL_WARNING, "beat_this_cpp_api") {
+    Impl(const void* model_data, size_t model_size, Ort::Env& ext_env) : env(ext_env) {
         Ort::SessionOptions session_options;
 
         try {
@@ -70,12 +70,14 @@ public:
     }
 };
 
-BeatThis::BeatThis(const std::string& onnx_model_path) : pImpl(std::make_unique<Impl>(onnx_model_path)) {}
+BeatThis::BeatThis(const std::string& onnx_model_path, Ort::Env& env)
+    : pImpl(std::make_unique<Impl>(onnx_model_path, env)) {}
 
-BeatThis::BeatThis(const std::vector<uint8_t>& model_data)
-    : pImpl(std::make_unique<Impl>(model_data.data(), model_data.size())) {}
+BeatThis::BeatThis(const std::vector<uint8_t>& model_data, Ort::Env& env)
+    : pImpl(std::make_unique<Impl>(model_data.data(), model_data.size(), env)) {}
 
-BeatThis::BeatThis(const void* model_data, size_t model_size) : pImpl(std::make_unique<Impl>(model_data, model_size)) {}
+BeatThis::BeatThis(const void* model_data, size_t model_size, Ort::Env& env)
+    : pImpl(std::make_unique<Impl>(model_data, model_size, env)) {}
 
 BeatThis::~BeatThis() = default;
 
